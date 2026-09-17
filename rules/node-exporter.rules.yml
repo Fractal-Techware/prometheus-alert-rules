@@ -1,0 +1,92 @@
+# Free sample of the Fractal Techware Prometheus Alert Rules & Runbook Pack (MIT).
+# Full pack (179 rules, 364 tests): https://fractaltechware.gumroad.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=rules&utm_campaign=free-repo
+groups:
+  - name: ftw.node-exporter.alerts
+    rules:
+      - alert: NodeExporterDown
+        expr: up{job=~"node|node-exporter|node_exporter|prometheus-node-exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Host or node_exporter is down.
+          description: node_exporter target {{ $labels.instance }} (job {{ $labels.job }}) has been unreachable for 5m.
+          runbook_url: runbooks/node-exporter/NodeExporterDown.md
+      - alert: NodeFilesystemSpaceFillingUp
+        expr: |-
+          (
+            node_filesystem_avail_bytes{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} / node_filesystem_size_bytes{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} * 100 < 15
+          and
+            predict_linear(node_filesystem_avail_bytes{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"}[6h], 24 * 3600) < 0
+          and
+            node_filesystem_readonly{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} == 0
+          )
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: Filesystem is predicted to run out of space within 24 hours.
+          description: Filesystem {{ $labels.mountpoint }} ({{ $labels.device }}) on {{ $labels.instance }} has {{ $value | printf "%.1f" }}% free and, at the current rate, fills up within 24 hours.
+          runbook_url: runbooks/node-exporter/NodeFilesystemSpaceFillingUp.md
+      - alert: NodeFilesystemSpaceFillingUp
+        expr: |-
+          (
+            node_filesystem_avail_bytes{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} / node_filesystem_size_bytes{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} * 100 < 10
+          and
+            predict_linear(node_filesystem_avail_bytes{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"}[6h], 4 * 3600) < 0
+          and
+            node_filesystem_readonly{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} == 0
+          )
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: Filesystem is predicted to run out of space within 4 hours.
+          description: Filesystem {{ $labels.mountpoint }} ({{ $labels.device }}) on {{ $labels.instance }} has {{ $value | printf "%.1f" }}% free and, at the current rate, fills up within 4 hours.
+          runbook_url: runbooks/node-exporter/NodeFilesystemSpaceFillingUp.md
+      - alert: NodeFilesystemAlmostOutOfSpace
+        expr: |-
+          (
+            node_filesystem_avail_bytes{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} / node_filesystem_size_bytes{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} * 100 < 10
+          and
+            node_filesystem_readonly{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} == 0
+          )
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: Filesystem has less than 10% space left.
+          description: Filesystem {{ $labels.mountpoint }} ({{ $labels.device }}) on {{ $labels.instance }} has only {{ $value | printf "%.1f" }}% space left.
+          runbook_url: runbooks/node-exporter/NodeFilesystemAlmostOutOfSpace.md
+      - alert: NodeFilesystemAlmostOutOfSpace
+        expr: |-
+          (
+            node_filesystem_avail_bytes{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} / node_filesystem_size_bytes{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} * 100 < 5
+          and
+            node_filesystem_readonly{fstype!="", fstype!~"tmpfs|ramfs|squashfs|overlay|nsfs|fuse.lxcfs|fuse.snapfuse", mountpoint!~"/run(/.*)?|/var/lib/kubelet/.+|/var/lib/docker/.+"} == 0
+          )
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: Filesystem has less than 5% space left.
+          description: Filesystem {{ $labels.mountpoint }} ({{ $labels.device }}) on {{ $labels.instance }} has only {{ $value | printf "%.1f" }}% space left.
+          runbook_url: runbooks/node-exporter/NodeFilesystemAlmostOutOfSpace.md
+      - alert: NodeHighCPUUsage
+        expr: 100 * (1 - avg without (cpu, mode) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 90
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: Host CPU usage is above 90%.
+          description: CPU usage on {{ $labels.instance }} has been {{ $value | printf "%.1f" }}% for more than 30m.
+          runbook_url: runbooks/node-exporter/NodeHighCPUUsage.md
+      - alert: NodeMemoryHighUtilization
+        expr: 100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100) > 90
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Host memory utilisation is above 90%.
+          description: Memory utilisation on {{ $labels.instance }} is {{ $value | printf "%.1f" }}%.
+          runbook_url: runbooks/node-exporter/NodeMemoryHighUtilization.md

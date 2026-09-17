@@ -1,0 +1,275 @@
+# Free sample of the Fractal Techware Prometheus Alert Rules & Runbook Pack (MIT).
+# Full pack (179 rules, 364 tests): https://fractaltechware.gumroad.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=rules&utm_campaign=free-repo
+rule_files:
+  - ../rules/node-exporter.rules.yml
+evaluation_interval: 1m
+tests:
+  - name: 'NodeExporterDown [critical] fires: positive'
+    interval: 1m
+    input_series:
+      - series: up{job="node",instance="db-1:9100"}
+        values: '0x10'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: NodeExporterDown
+        exp_alerts:
+          - exp_labels:
+              job: node
+              instance: db-1:9100
+              severity: critical
+            exp_annotations:
+              summary: Host or node_exporter is down.
+              description: node_exporter target db-1:9100 (job node) has been unreachable for 5m.
+              runbook_url: runbooks/node-exporter/NodeExporterDown.md
+  - name: 'NodeExporterDown [critical] stays quiet: other jobs are ignored'
+    interval: 1m
+    input_series:
+      - series: up{job="kubernetes-nodes-cadvisor",instance="db-1:10250"}
+        values: '0x10'
+      - series: up{job="node",instance="db-1:9100"}
+        values: 1x10
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: NodeExporterDown
+        exp_alerts: []
+  - name: 'NodeFilesystemSpaceFillingUp [warning] fires: positive'
+    interval: 5m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: 200-1x100
+      - series: node_filesystem_size_bytes{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: 1000x100
+      - series: node_filesystem_readonly{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: '0x100'
+    alert_rule_test:
+      - eval_time: 7h
+        alertname: NodeFilesystemSpaceFillingUp
+        exp_alerts:
+          - exp_labels:
+              job: node
+              instance: db-1:9100
+              device: /dev/nvme0n1p1
+              fstype: ext4
+              mountpoint: /
+              severity: warning
+            exp_annotations:
+              summary: Filesystem is predicted to run out of space within 24 hours.
+              description: Filesystem / (/dev/nvme0n1p1) on db-1:9100 has 11.6% free and, at the current rate, fills up within 24 hours.
+              runbook_url: runbooks/node-exporter/NodeFilesystemSpaceFillingUp.md
+  - name: 'NodeFilesystemSpaceFillingUp [warning] stays quiet: low but stable usage'
+    interval: 5m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: 120x100
+      - series: node_filesystem_size_bytes{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: 1000x100
+      - series: node_filesystem_readonly{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: '0x100'
+    alert_rule_test:
+      - eval_time: 7h
+        alertname: NodeFilesystemSpaceFillingUp
+        exp_alerts: []
+  - name: 'NodeFilesystemSpaceFillingUp [critical] fires: positive'
+    interval: 5m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: 150-2x100
+      - series: node_filesystem_size_bytes{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: 1000x100
+      - series: node_filesystem_readonly{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: '0x100'
+    alert_rule_test:
+      - eval_time: 5h
+        alertname: NodeFilesystemSpaceFillingUp
+        exp_alerts:
+          - exp_labels:
+              job: node
+              instance: db-1:9100
+              device: /dev/nvme0n1p1
+              fstype: ext4
+              mountpoint: /
+              severity: critical
+            exp_annotations:
+              summary: Filesystem is predicted to run out of space within 4 hours.
+              description: Filesystem / (/dev/nvme0n1p1) on db-1:9100 has 3.0% free and, at the current rate, fills up within 4 hours.
+              runbook_url: runbooks/node-exporter/NodeFilesystemSpaceFillingUp.md
+          - exp_labels:
+              job: node
+              instance: db-1:9100
+              device: /dev/nvme0n1p1
+              fstype: ext4
+              mountpoint: /
+              severity: warning
+            exp_annotations:
+              summary: Filesystem is predicted to run out of space within 24 hours.
+              description: Filesystem / (/dev/nvme0n1p1) on db-1:9100 has 3.0% free and, at the current rate, fills up within 24 hours.
+              runbook_url: runbooks/node-exporter/NodeFilesystemSpaceFillingUp.md
+  - name: 'NodeFilesystemSpaceFillingUp [critical] stays quiet: read-only filesystems are ignored'
+    interval: 5m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: 150-2x100
+      - series: node_filesystem_size_bytes{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: 1000x100
+      - series: node_filesystem_readonly{job="node",instance="db-1:9100",device="/dev/nvme0n1p1",fstype="ext4",mountpoint="/"}
+        values: 1x100
+    alert_rule_test:
+      - eval_time: 5h
+        alertname: NodeFilesystemSpaceFillingUp
+        exp_alerts: []
+  - name: 'NodeFilesystemAlmostOutOfSpace [warning] fires: positive'
+    interval: 1m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="web-1:9100",device="/dev/sda1",fstype="xfs",mountpoint="/data"}
+        values: 80x60
+      - series: node_filesystem_size_bytes{job="node",instance="web-1:9100",device="/dev/sda1",fstype="xfs",mountpoint="/data"}
+        values: 1000x60
+      - series: node_filesystem_readonly{job="node",instance="web-1:9100",device="/dev/sda1",fstype="xfs",mountpoint="/data"}
+        values: '0x60'
+    alert_rule_test:
+      - eval_time: 45m
+        alertname: NodeFilesystemAlmostOutOfSpace
+        exp_alerts:
+          - exp_labels:
+              job: node
+              instance: web-1:9100
+              device: /dev/sda1
+              fstype: xfs
+              mountpoint: /data
+              severity: warning
+            exp_annotations:
+              summary: Filesystem has less than 10% space left.
+              description: Filesystem /data (/dev/sda1) on web-1:9100 has only 8.0% space left.
+              runbook_url: runbooks/node-exporter/NodeFilesystemAlmostOutOfSpace.md
+  - name: 'NodeFilesystemAlmostOutOfSpace [warning] stays quiet: tmpfs is excluded'
+    interval: 1m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="web-1:9100",device="tmpfs",fstype="tmpfs",mountpoint="/dev/shm"}
+        values: 10x60
+      - series: node_filesystem_size_bytes{job="node",instance="web-1:9100",device="tmpfs",fstype="tmpfs",mountpoint="/dev/shm"}
+        values: 1000x60
+      - series: node_filesystem_readonly{job="node",instance="web-1:9100",device="tmpfs",fstype="tmpfs",mountpoint="/dev/shm"}
+        values: '0x60'
+    alert_rule_test:
+      - eval_time: 45m
+        alertname: NodeFilesystemAlmostOutOfSpace
+        exp_alerts: []
+  - name: 'NodeFilesystemAlmostOutOfSpace [critical] fires: positive'
+    interval: 1m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="web-1:9100",device="/dev/sda1",fstype="xfs",mountpoint="/data"}
+        values: 25x60
+      - series: node_filesystem_size_bytes{job="node",instance="web-1:9100",device="/dev/sda1",fstype="xfs",mountpoint="/data"}
+        values: 1000x60
+      - series: node_filesystem_readonly{job="node",instance="web-1:9100",device="/dev/sda1",fstype="xfs",mountpoint="/data"}
+        values: '0x60'
+    alert_rule_test:
+      - eval_time: 45m
+        alertname: NodeFilesystemAlmostOutOfSpace
+        exp_alerts:
+          - exp_labels:
+              job: node
+              instance: web-1:9100
+              device: /dev/sda1
+              fstype: xfs
+              mountpoint: /data
+              severity: critical
+            exp_annotations:
+              summary: Filesystem has less than 5% space left.
+              description: Filesystem /data (/dev/sda1) on web-1:9100 has only 2.5% space left.
+              runbook_url: runbooks/node-exporter/NodeFilesystemAlmostOutOfSpace.md
+          - exp_labels:
+              job: node
+              instance: web-1:9100
+              device: /dev/sda1
+              fstype: xfs
+              mountpoint: /data
+              severity: warning
+            exp_annotations:
+              summary: Filesystem has less than 10% space left.
+              description: Filesystem /data (/dev/sda1) on web-1:9100 has only 2.5% space left.
+              runbook_url: runbooks/node-exporter/NodeFilesystemAlmostOutOfSpace.md
+  - name: 'NodeFilesystemAlmostOutOfSpace [critical] fires: warning level only'
+    interval: 1m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="web-1:9100",device="/dev/sda1",fstype="xfs",mountpoint="/data"}
+        values: 80x60
+      - series: node_filesystem_size_bytes{job="node",instance="web-1:9100",device="/dev/sda1",fstype="xfs",mountpoint="/data"}
+        values: 1000x60
+      - series: node_filesystem_readonly{job="node",instance="web-1:9100",device="/dev/sda1",fstype="xfs",mountpoint="/data"}
+        values: '0x60'
+    alert_rule_test:
+      - eval_time: 45m
+        alertname: NodeFilesystemAlmostOutOfSpace
+        exp_alerts:
+          - exp_labels:
+              job: node
+              instance: web-1:9100
+              device: /dev/sda1
+              fstype: xfs
+              mountpoint: /data
+              severity: warning
+            exp_annotations:
+              summary: Filesystem has less than 10% space left.
+              description: Filesystem /data (/dev/sda1) on web-1:9100 has only 8.0% space left.
+              runbook_url: runbooks/node-exporter/NodeFilesystemAlmostOutOfSpace.md
+  - name: 'NodeHighCPUUsage [warning] fires: positive'
+    interval: 1m
+    input_series:
+      - series: node_cpu_seconds_total{job="node",instance="app-1:9100",cpu="0",mode="idle"}
+        values: 0+3x60
+      - series: node_cpu_seconds_total{job="node",instance="app-1:9100",cpu="1",mode="idle"}
+        values: 0+3x60
+    alert_rule_test:
+      - eval_time: 50m
+        alertname: NodeHighCPUUsage
+        exp_alerts:
+          - exp_labels:
+              job: node
+              instance: app-1:9100
+              severity: warning
+            exp_annotations:
+              summary: Host CPU usage is above 90%.
+              description: CPU usage on app-1:9100 has been 95.0% for more than 30m.
+              runbook_url: runbooks/node-exporter/NodeHighCPUUsage.md
+  - name: 'NodeHighCPUUsage [warning] stays quiet: negative'
+    interval: 1m
+    input_series:
+      - series: node_cpu_seconds_total{job="node",instance="app-1:9100",cpu="0",mode="idle"}
+        values: 0+30x60
+      - series: node_cpu_seconds_total{job="node",instance="app-1:9100",cpu="1",mode="idle"}
+        values: 0+30x60
+    alert_rule_test:
+      - eval_time: 50m
+        alertname: NodeHighCPUUsage
+        exp_alerts: []
+  - name: 'NodeMemoryHighUtilization [warning] fires: positive'
+    interval: 1m
+    input_series:
+      - series: node_memory_MemAvailable_bytes{job="node",instance="app-1:9100"}
+        values: 500000000x30
+      - series: node_memory_MemTotal_bytes{job="node",instance="app-1:9100"}
+        values: 8000000000x30
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: NodeMemoryHighUtilization
+        exp_alerts:
+          - exp_labels:
+              job: node
+              instance: app-1:9100
+              severity: warning
+            exp_annotations:
+              summary: Host memory utilisation is above 90%.
+              description: Memory utilisation on app-1:9100 is 93.8%.
+              runbook_url: runbooks/node-exporter/NodeMemoryHighUtilization.md
+  - name: 'NodeMemoryHighUtilization [warning] stays quiet: negative'
+    interval: 1m
+    input_series:
+      - series: node_memory_MemAvailable_bytes{job="node",instance="app-1:9100"}
+        values: 4000000000x30
+      - series: node_memory_MemTotal_bytes{job="node",instance="app-1:9100"}
+        values: 8000000000x30
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: NodeMemoryHighUtilization
+        exp_alerts: []

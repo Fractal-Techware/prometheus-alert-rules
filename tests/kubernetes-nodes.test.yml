@@ -1,0 +1,34 @@
+# Free sample of the Fractal Techware Prometheus Alert Rules & Runbook Pack (MIT).
+# Full pack (179 rules, 364 tests): https://fractaltechware.gumroad.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=rules&utm_campaign=free-repo
+rule_files:
+  - ../rules/kubernetes-nodes.rules.yml
+evaluation_interval: 1m
+tests:
+  - name: 'KubeNodeNotReady [warning] fires: positive'
+    interval: 1m
+    input_series:
+      - series: kube_node_status_condition{job="kube-state-metrics",node="worker-2",condition="Ready",status="true"}
+        values: '0x30'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: KubeNodeNotReady
+        exp_alerts:
+          - exp_labels:
+              job: kube-state-metrics
+              node: worker-2
+              condition: Ready
+              status: 'true'
+              severity: warning
+            exp_annotations:
+              summary: Node is not ready.
+              description: Node worker-2 has not been Ready for more than 15m.
+              runbook_url: runbooks/kubernetes-nodes/KubeNodeNotReady.md
+  - name: 'KubeNodeNotReady [warning] stays quiet: negative'
+    interval: 1m
+    input_series:
+      - series: kube_node_status_condition{job="kube-state-metrics",node="worker-2",condition="Ready",status="true"}
+        values: 1x30
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: KubeNodeNotReady
+        exp_alerts: []

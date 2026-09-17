@@ -1,0 +1,25 @@
+# Local trial: Prometheus + node_exporter with the rules from this repository loaded.
+#
+#   docker compose -f examples/docker-compose.yml up -d
+#   open http://localhost:9090/alerts
+#   docker compose -f examples/docker-compose.yml down
+#
+# The node_exporter alerts evaluate against real host metrics. The Kubernetes
+# alerts load and show as inactive (they need kube-state-metrics in a cluster).
+
+name: prometheus-alert-rules-demo
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.14.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-lifecycle
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../rules:/etc/prometheus/rules:ro
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1

@@ -1,0 +1,190 @@
+# Free sample of the Fractal Techware Prometheus Alert Rules & Runbook Pack (MIT).
+# Full pack (179 rules, 364 tests): https://fractaltechware.gumroad.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=rules&utm_campaign=free-repo
+rule_files:
+  - ../rules/kubernetes-workloads.rules.yml
+evaluation_interval: 1m
+tests:
+  - name: 'KubePodCrashLooping [warning] fires: positive'
+    interval: 1m
+    input_series:
+      - series: kube_pod_container_status_waiting_reason{job="kube-state-metrics",namespace="shop",pod="api-7d9f",container="api",reason="CrashLoopBackOff"}
+        values: 1x40
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: KubePodCrashLooping
+        exp_alerts:
+          - exp_labels:
+              job: kube-state-metrics
+              namespace: shop
+              pod: api-7d9f
+              container: api
+              reason: CrashLoopBackOff
+              severity: warning
+            exp_annotations:
+              summary: Pod container is crash looping.
+              description: Container api in pod shop/api-7d9f has been in CrashLoopBackOff for at least 15m.
+              runbook_url: runbooks/kubernetes-workloads/KubePodCrashLooping.md
+  - name: 'KubePodCrashLooping [warning] stays quiet: container still creating'
+    interval: 1m
+    input_series:
+      - series: kube_pod_container_status_waiting_reason{job="kube-state-metrics",namespace="shop",pod="api-7d9f",container="api",reason="ContainerCreating"}
+        values: 1x40
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: KubePodCrashLooping
+        exp_alerts: []
+  - name: 'KubePodNotReady [warning] fires: positive'
+    interval: 1m
+    input_series:
+      - series: kube_pod_status_phase{job="kube-state-metrics",namespace="shop",pod="web-0",phase="Pending"}
+        values: 1x30
+      - series: kube_pod_status_phase{job="kube-state-metrics",namespace="shop",pod="web-0",phase="Running"}
+        values: '0x30'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: KubePodNotReady
+        exp_alerts:
+          - exp_labels:
+              namespace: shop
+              pod: web-0
+              severity: warning
+            exp_annotations:
+              summary: Pod has been in a non-ready state.
+              description: Pod shop/web-0 has been Pending, Unknown or Failed for longer than 15m.
+              runbook_url: runbooks/kubernetes-workloads/KubePodNotReady.md
+  - name: 'KubePodNotReady [warning] stays quiet: job pods are excluded'
+    interval: 1m
+    input_series:
+      - series: kube_pod_status_phase{job="kube-state-metrics",namespace="batch",pod="report-abc",phase="Pending"}
+        values: 1x30
+      - series: kube_pod_owner{job="kube-state-metrics",namespace="batch",pod="report-abc",owner_kind="Job",owner_name="report"}
+        values: 1x30
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: KubePodNotReady
+        exp_alerts: []
+  - name: 'KubeContainerOOMKilled [warning] fires: positive'
+    interval: 1m
+    input_series:
+      - series: kube_pod_container_status_restarts_total{job="kube-state-metrics",namespace="shop",pod="api-7d9f",container="api"}
+        values: 0 0 0 0 0 1 1 1 1 1 1 1
+      - series: kube_pod_container_status_last_terminated_reason{job="kube-state-metrics",namespace="shop",pod="api-7d9f",container="api",reason="OOMKilled"}
+        values: 1x11
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: KubeContainerOOMKilled
+        exp_alerts:
+          - exp_labels:
+              job: kube-state-metrics
+              namespace: shop
+              pod: api-7d9f
+              container: api
+              severity: warning
+            exp_annotations:
+              summary: Container was OOM killed.
+              description: Container api in pod shop/api-7d9f restarted after being killed for exceeding its memory limit.
+              runbook_url: runbooks/kubernetes-workloads/KubeContainerOOMKilled.md
+  - name: 'KubeContainerOOMKilled [warning] stays quiet: restart for another reason'
+    interval: 1m
+    input_series:
+      - series: kube_pod_container_status_restarts_total{job="kube-state-metrics",namespace="shop",pod="api-7d9f",container="api"}
+        values: 0 0 0 0 0 1 1 1 1 1 1 1
+      - series: kube_pod_container_status_last_terminated_reason{job="kube-state-metrics",namespace="shop",pod="api-7d9f",container="api",reason="Error"}
+        values: 1x11
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: KubeContainerOOMKilled
+        exp_alerts: []
+  - name: 'KubeImagePullBackOff [warning] fires: positive'
+    interval: 1m
+    input_series:
+      - series: kube_pod_container_status_waiting_reason{job="kube-state-metrics",namespace="shop",pod="web-1",container="web",reason="ImagePullBackOff"}
+        values: 1x30
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: KubeImagePullBackOff
+        exp_alerts:
+          - exp_labels:
+              job: kube-state-metrics
+              namespace: shop
+              pod: web-1
+              container: web
+              reason: ImagePullBackOff
+              severity: warning
+            exp_annotations:
+              summary: Container image cannot be pulled.
+              description: Container web in pod shop/web-1 is waiting with reason ImagePullBackOff.
+              runbook_url: runbooks/kubernetes-workloads/KubeImagePullBackOff.md
+  - name: 'KubeImagePullBackOff [warning] stays quiet: pull recovered quickly'
+    interval: 1m
+    input_series:
+      - series: kube_pod_container_status_waiting_reason{job="kube-state-metrics",namespace="shop",pod="web-1",container="web",reason="ErrImagePull"}
+        values: 1 1 1 _x27
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: KubeImagePullBackOff
+        exp_alerts: []
+  - name: 'KubeDeploymentReplicasMismatch [warning] fires: positive'
+    interval: 1m
+    input_series:
+      - series: kube_deployment_spec_replicas{job="kube-state-metrics",namespace="shop",deployment="api"}
+        values: 3x40
+      - series: kube_deployment_status_replicas_available{job="kube-state-metrics",namespace="shop",deployment="api"}
+        values: 1x40
+      - series: kube_deployment_status_replicas_updated{job="kube-state-metrics",namespace="shop",deployment="api"}
+        values: 3x40
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: KubeDeploymentReplicasMismatch
+        exp_alerts:
+          - exp_labels:
+              job: kube-state-metrics
+              namespace: shop
+              deployment: api
+              severity: warning
+            exp_annotations:
+              summary: Deployment has fewer available replicas than desired.
+              description: Deployment shop/api has had fewer available replicas than the desired 3 for longer than 15m, and no rollout is progressing.
+              runbook_url: runbooks/kubernetes-workloads/KubeDeploymentReplicasMismatch.md
+  - name: 'KubeDeploymentReplicasMismatch [warning] stays quiet: all replicas available'
+    interval: 1m
+    input_series:
+      - series: kube_deployment_spec_replicas{job="kube-state-metrics",namespace="shop",deployment="api"}
+        values: 3x40
+      - series: kube_deployment_status_replicas_available{job="kube-state-metrics",namespace="shop",deployment="api"}
+        values: 3x40
+      - series: kube_deployment_status_replicas_updated{job="kube-state-metrics",namespace="shop",deployment="api"}
+        values: 3x40
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: KubeDeploymentReplicasMismatch
+        exp_alerts: []
+  - name: 'KubeDeploymentRolloutStuck [warning] fires: positive'
+    interval: 1m
+    input_series:
+      - series: kube_deployment_status_condition{job="kube-state-metrics",namespace="shop",deployment="api",condition="Progressing",status="false"}
+        values: 1x30
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: KubeDeploymentRolloutStuck
+        exp_alerts:
+          - exp_labels:
+              job: kube-state-metrics
+              namespace: shop
+              deployment: api
+              condition: Progressing
+              status: 'false'
+              severity: warning
+            exp_annotations:
+              summary: Deployment rollout is not progressing.
+              description: Rollout of deployment shop/api has exceeded its progress deadline and has not progressed for 15m.
+              runbook_url: runbooks/kubernetes-workloads/KubeDeploymentRolloutStuck.md
+  - name: 'KubeDeploymentRolloutStuck [warning] stays quiet: negative'
+    interval: 1m
+    input_series:
+      - series: kube_deployment_status_condition{job="kube-state-metrics",namespace="shop",deployment="api",condition="Progressing",status="false"}
+        values: '0x30'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: KubeDeploymentRolloutStuck
+        exp_alerts: []
