@@ -18,7 +18,7 @@ full disks, and down hosts. Every alert ships with:
 Works with Prometheus 2.42+ and 3.x, kube-prometheus-stack / prometheus-operator,
 Grafana Mimir, Thanos and VictoriaMetrics. Metric names match kube-state-metrics v2.x and node_exporter 1.x.
 
-By [Fractal Techware](https://fractaltechware.gumroad.com/?utm_source=github&utm_medium=readme&utm_campaign=free-repo). MIT licensed.
+By [Fractal Techware](https://store.fractaltechware.com/?utm_source=github&utm_medium=readme&utm_campaign=free-repo). MIT licensed.
 
 ## Included alerts
 
@@ -135,7 +135,7 @@ On call with an alert that isn't in this repo? [https://fractal-techware.github.
 ## Want the full set?
 
 This repository is a free sample of the
-**[Prometheus Alert Rules & Runbook Pack](https://fractaltechware.gumroad.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=readme&utm_campaign=free-repo)**,
+**[Prometheus Alert Rules & Runbook Pack](https://store.fractaltechware.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=readme&utm_campaign=free-repo)**,
 built from the same source and held to the same test standard. If these 12 alerts are
 useful, the paid tiers cover the rest of a production stack:
 
@@ -152,7 +152,7 @@ useful, the paid tiers cover the rest of a production stack:
 | Generator (thresholds/labels from one file), Slack/PagerDuty/Teams/email templates, Helm values, HTML runbook site | – | – | – | yes |
 | License | MIT | own organization | own organization | client / agency use |
 
-[See the full pack on Gumroad →](https://fractaltechware.gumroad.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=readme&utm_campaign=free-repo)
+[See the full pack on Gumroad →](https://store.fractaltechware.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=readme&utm_campaign=free-repo)
 
 ## Contributing
 

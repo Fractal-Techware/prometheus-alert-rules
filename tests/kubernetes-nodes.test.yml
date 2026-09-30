@@ -1,5 +1,5 @@
 # Free sample of the Fractal Techware Prometheus Alert Rules & Runbook Pack (MIT).
-# Full pack (179 rules, 364 tests): https://fractaltechware.gumroad.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=rules&utm_campaign=free-repo
+# Full pack (179 rules, 364 tests): https://store.fractaltechware.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=rules&utm_campaign=free-repo
 rule_files:
   - ../rules/kubernetes-nodes.rules.yml
 evaluation_interval: 1m
