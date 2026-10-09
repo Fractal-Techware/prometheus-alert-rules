@@ -85,8 +85,11 @@ done | kubectl apply -f -
 ```
 
 The `release` label must match your `prometheus.prometheusSpec.ruleSelector`. kube-prometheus-stack's
-default rules include alerts with the same names (e.g. `KubePodCrashLooping`); disable the
-overlapping `defaultRules.rules.kubernetesApps` / `nodeExporterAlerting` groups to avoid duplicates.
+default rules include alerts with the same names (e.g. `KubePodCrashLooping`). Review the
+overlap before loading both sets. If you disable `defaultRules.rules.kubernetesApps` or
+`nodeExporterAlerting`, first retain the other alerts you still need: this free sample
+does **not** replace every alert in those groups. Confirm coverage and routing in a test
+environment before changing production notification behavior.
 
 ### 2c. Mimir, Grafana Cloud, Thanos, VictoriaMetrics
 
@@ -141,9 +144,10 @@ useful, the paid tiers cover the rest of a production stack:
 
 | | **Free** (this repo) | **Starter** $19 | **Pro** $49 | **Agency** $299 |
 |---|:---:|:---:|:---:|:---:|
-| Alerting rules | 12 alerts | 49 | 179 | 179 |
+| Alerting rules | 14 (12 alert names) | 49 | 179 | 179 |
 | Domains | K8s workloads/nodes, hosts | K8s workloads/nodes, hosts | 20 | 20 |
-| promtool unit tests | 28 | 98 | 364 (+17 recording rules) | 364 |
+| promtool unit tests | 28 | 98 | 364 | 364 |
+| Recording rules | – | – | 17 | 17 |
 | Runbooks | 12 | 46 | 165 | 165 |
 | StatefulSets, DaemonSets, node pressure, capacity, inodes, network, RAID, clock | – | yes | yes | yes |
 | Control plane, PVCs, Jobs, HPA, certificates, Prometheus/Alertmanager self-monitoring | – | – | yes | yes |
@@ -151,8 +155,18 @@ useful, the paid tiers cover the rest of a production stack:
 | PrometheusRule CRDs + tested Alertmanager routing | – | – | yes | yes |
 | Generator (thresholds/labels from one file), Slack/PagerDuty/Teams/email templates, Helm values, HTML runbook site | – | – | – | yes |
 | License | MIT | own organization | own organization | client / agency use |
+| Updates included | public repository releases | 30 days | 1 year | 1 year |
 
-[See the full pack on Gumroad →](https://store.fractaltechware.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=readme&utm_campaign=free-repo)
+**Choose Pro if** you already operate Prometheus and need broader coverage plus ready-to-apply
+PrometheusRule CRDs and tested Alertmanager routing. Check your exporters, metric names and
+job labels before installing; unit tests prove behavior on synthetic input, not compatibility
+with every deployment. Keep Free if the included workload and host coverage meets your needs.
+
+**[Get Pro — $49 once →](https://store.fractaltechware.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=readme&utm_campaign=first_sale_oct2026&utm_content=pro-cta)**
+Select **Pro** on the product page (the default Starter tier is $19). Pro includes a perpetual
+license for your own organization and one year of updates; paid client deployments require
+Agency. Support is documentation-based. If the rules do not work with a supported setup and
+the troubleshooting guide does not resolve it, contact us within 14 days for a refund.
 
 ## Contributing
 
