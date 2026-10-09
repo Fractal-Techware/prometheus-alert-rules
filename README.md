@@ -139,7 +139,7 @@ This repository is a free sample of the
 built from the same source and held to the same test standard. If these 12 alerts are
 useful, the paid tiers cover the rest of a production stack:
 
-| | **Free** (this repo) | **Starter** $19 | **Pro** $49 | **Studio** $99 |
+| | **Free** (this repo) | **Starter** $19 | **Pro** $49 | **Agency** $299 |
 |---|:---:|:---:|:---:|:---:|
 | Alerting rules | 12 alerts | 49 | 179 | 179 |
 | Domains | K8s workloads/nodes, hosts | K8s workloads/nodes, hosts | 20 | 20 |

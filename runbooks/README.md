@@ -31,4 +31,4 @@ One runbook per alert. Every runbook follows the same template: Meaning, Impact,
 
 ---
 
-The [full pack](https://store.fractaltechware.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=readme&utm_campaign=free-repo) has 165 runbooks for 179 alerts (Kubernetes, control plane, databases, Kafka, ingress, SLOs) and, in Studio, a searchable HTML runbook site.
+The [full pack](https://store.fractaltechware.com/l/prometheus-alert-rules-pack?utm_source=github&utm_medium=readme&utm_campaign=free-repo) has 165 runbooks for 179 alerts (Kubernetes, control plane, databases, Kafka, ingress, SLOs) and, in Agency, a searchable HTML runbook site.
